@@ -1,0 +1,253 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Review Agent API",
+    "description": "只接收 Git diff 与明确请求的按路径上下文的审阅 API。",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reviews": {
+      "post": {
+        "summary": "Create Review",
+        "description": "Accept a bounded request without persisting or logging source code.",
+        "operationId": "create_review_v1_reviews_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Finding": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2"],
+            "title": "Severity"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "start_line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Start Line"
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "End Line"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "evidence": {
+            "type": "string",
+            "title": "Evidence"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "path",
+          "start_line",
+          "end_line",
+          "title",
+          "evidence",
+          "recommendation"
+        ],
+        "title": "Finding",
+        "description": "An advisory issue anchored to changed lines."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RequestedContext": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "仓库相对路径"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 100000,
+            "minLength": 1,
+            "title": "Content",
+            "description": "已脱敏的文件内容"
+          }
+        },
+        "type": "object",
+        "required": ["path", "content"],
+        "title": "RequestedContext",
+        "description": "A single file explicitly requested by the reviewer."
+      },
+      "ReviewRequest": {
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Organization Id"
+          },
+          "diff": {
+            "type": "string",
+            "maxLength": 500000,
+            "minLength": 1,
+            "title": "Diff"
+          },
+          "context": {
+            "items": {
+              "$ref": "#/components/schemas/RequestedContext"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": ["organization_id", "diff"],
+        "title": "ReviewRequest",
+        "description": "The complete v1 review input: a diff and bounded optional context."
+      },
+      "ReviewResponse": {
+        "properties": {
+          "review_id": {
+            "type": "string",
+            "title": "Review Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed", "needs_context"],
+            "title": "Status"
+          },
+          "report": {
+            "type": "string",
+            "title": "Report"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "requested_context_paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Requested Context Paths"
+          }
+        },
+        "type": "object",
+        "required": ["review_id", "status", "report"],
+        "title": "ReviewResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

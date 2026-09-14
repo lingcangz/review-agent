@@ -1,0 +1,6 @@
+# 不允许作为 diff 或按需上下文上传的路径
+.env
+.env.*
+*.pem
+*.key
+secrets/**

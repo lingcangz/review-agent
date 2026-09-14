@@ -1,0 +1,41 @@
+:root {
+  color: #18212f;
+  background: #f7f8fa;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 96px 24px;
+}
+
+.eyebrow {
+  color: #286046;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: clamp(2rem, 7vw, 4rem);
+  line-height: 1.1;
+}
+
+section {
+  margin-top: 40px;
+  padding: 24px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(24 33 47 / 8%);
+}
+
+code {
+  display: block;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: #edf1f5;
+}

@@ -1,0 +1,18 @@
+{
+  "name": "review-agent",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "generate:api": "node scripts/quality.mjs generate-api",
+    "format": "node scripts/quality.mjs format",
+    "format:check": "node scripts/quality.mjs format-check",
+    "typecheck": "node scripts/quality.mjs typecheck",
+    "test": "node scripts/quality.mjs test",
+    "build": "node scripts/quality.mjs build"
+  },
+  "devDependencies": {
+    "prettier": "3.5.3"
+  }
+}
