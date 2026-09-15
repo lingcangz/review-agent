@@ -3,7 +3,7 @@ name = "review-agent-cli"
 version = "0.1.0"
 description = "Cross-platform client for the Review Agent API"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = []
 
 [project.scripts]

@@ -39,3 +39,35 @@ code {
   border-radius: 6px;
   background: #edf1f5;
 }
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #aab5c2;
+  border-radius: 6px;
+}
+
+button {
+  width: fit-content;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #286046;
+  cursor: pointer;
+}

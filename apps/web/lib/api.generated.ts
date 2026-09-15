@@ -21,6 +21,108 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/organizations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Organization */
+    post: operations['create_organization_v1_organizations_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/invitations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Invitation */
+    post: operations['create_invitation_v1_invitations_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/invitations/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept Invitation */
+    post: operations['accept_invitation_v1_invitations_accept_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/auth/email-login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Request Email Login */
+    post: operations['request_email_login_v1_auth_email_login_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/auth/email-login/verify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Verify Email Login */
+    post: operations['verify_email_login_v1_auth_email_login_verify_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/auth/personal-access-tokens': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Pat */
+    post: operations['create_pat_v1_auth_personal_access_tokens_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/reviews': {
     parameters: {
       query?: never;
@@ -30,10 +132,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /**
-     * Create Review
-     * @description Accept a bounded request without persisting or logging source code.
-     */
+    /** Create Review */
     post: operations['create_review_v1_reviews_post'];
     delete?: never;
     options?: never;
@@ -41,14 +140,129 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/reviews/{review_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Review */
+    get: operations['get_review_v1_reviews__review_id__get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reviews/{review_id}/context': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Upload Context */
+    post: operations['upload_context_v1_reviews__review_id__context_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/review-rules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Rules */
+    get: operations['list_rules_v1_review_rules_get'];
+    put?: never;
+    /** Create Rule */
+    post: operations['create_rule_v1_review_rules_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/review-rules/{rule_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Rule */
+    delete: operations['delete_rule_v1_review_rules__rule_id__delete'];
+    options?: never;
+    head?: never;
+    /** Update Rule */
+    patch: operations['update_rule_v1_review_rules__rule_id__patch'];
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /**
-     * Finding
-     * @description An advisory issue anchored to changed lines.
-     */
+    /** AuthTokenResponse */
+    AuthTokenResponse: {
+      /** Access Token */
+      access_token: string;
+      /**
+       * Token Type
+       * @default bearer
+       * @constant
+       */
+      token_type: 'bearer';
+      /**
+       * Expires At
+       * Format: date-time
+       */
+      expires_at: string;
+    };
+    /** ContextUploadRequest */
+    ContextUploadRequest: {
+      /** Context */
+      context: components['schemas']['RequestedContext'][];
+    };
+    /** EmailLoginRequest */
+    EmailLoginRequest: {
+      /**
+       * Email
+       * Format: email
+       */
+      email: string;
+      /** Organization Id */
+      organization_id: string;
+    };
+    /** EmailLoginResponse */
+    EmailLoginResponse: {
+      /** Message */
+      message: string;
+    };
+    /** EmailLoginVerify */
+    EmailLoginVerify: {
+      /**
+       * Email
+       * Format: email
+       */
+      email: string;
+      /** Token */
+      token: string;
+      /** Organization Id */
+      organization_id: string;
+    };
+    /** Finding */
     Finding: {
       /**
        * Severity
@@ -73,10 +287,87 @@ export interface components {
       /** Detail */
       detail?: components['schemas']['ValidationError'][];
     };
-    /**
-     * RequestedContext
-     * @description A single file explicitly requested by the reviewer.
-     */
+    /** InvitationAccept */
+    InvitationAccept: {
+      /** Code */
+      code: string;
+      /**
+       * Email
+       * Format: email
+       */
+      email: string;
+    };
+    /** InvitationCreate */
+    InvitationCreate: {
+      /**
+       * Email
+       * Format: email
+       */
+      email: string;
+      /**
+       * Role
+       * @default member
+       * @enum {string}
+       */
+      role: 'admin' | 'member';
+    };
+    /** InvitationResponse */
+    InvitationResponse: {
+      /** Invitation Id */
+      invitation_id: string;
+      /**
+       * Code
+       * @description 仅在创建时返回；应通过安全渠道传递。
+       */
+      code: string;
+      /**
+       * Expires At
+       * Format: date-time
+       */
+      expires_at: string;
+    };
+    /** OrganizationCreate */
+    OrganizationCreate: {
+      /** Name */
+      name: string;
+      /**
+       * Owner Email
+       * Format: email
+       */
+      owner_email: string;
+    };
+    /** OrganizationResponse */
+    OrganizationResponse: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+    };
+    /** PersonalAccessTokenCreate */
+    PersonalAccessTokenCreate: {
+      /** Name */
+      name: string;
+      /**
+       * Expires In Days
+       * @default 90
+       */
+      expires_in_days: number | null;
+    };
+    /** PersonalAccessTokenResponse */
+    PersonalAccessTokenResponse: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /**
+       * Token
+       * @description 仅在创建时返回，请立即保存。
+       */
+      token: string;
+      /** Expires At */
+      expires_at: string | null;
+    };
+    /** RequestedContext */
     RequestedContext: {
       /**
        * Path
@@ -91,11 +382,9 @@ export interface components {
     };
     /**
      * ReviewRequest
-     * @description The complete v1 review input: a diff and bounded optional context.
+     * @description Diff and explicitly supplied, path-scoped context only.
      */
     ReviewRequest: {
-      /** Organization Id */
-      organization_id: string;
       /** Diff */
       diff: string;
       /** Context */
@@ -109,13 +398,60 @@ export interface components {
        * Status
        * @enum {string}
        */
-      status: 'completed' | 'needs_context';
+      status: 'queued' | 'running' | 'completed' | 'needs_context' | 'failed';
       /** Report */
-      report: string;
+      report?: string | null;
       /** Findings */
       findings?: components['schemas']['Finding'][];
       /** Requested Context Paths */
       requested_context_paths?: string[];
+    };
+    /** RuleCreate */
+    RuleCreate: {
+      /** Name */
+      name: string;
+      /** Instruction */
+      instruction: string;
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled: boolean;
+      /**
+       * Priority
+       * @default 100
+       */
+      priority: number;
+    };
+    /** RuleResponse */
+    RuleResponse: {
+      /** Name */
+      name: string;
+      /** Instruction */
+      instruction: string;
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled: boolean;
+      /**
+       * Priority
+       * @default 100
+       */
+      priority: number;
+      /** Id */
+      id: string;
+    };
+    /** RuleUpdate */
+    RuleUpdate: {
+      /** Name */
+      name?: string | null;
+      /** Instruction */
+      instruction?: string | null;
+      /** Enabled */
+      enabled?: boolean | null;
+      /** Priority */
+      priority?: number | null;
     };
     /** ValidationError */
     ValidationError: {
@@ -161,6 +497,202 @@ export interface operations {
       };
     };
   };
+  create_organization_v1_organizations_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OrganizationCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrganizationResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  create_invitation_v1_invitations_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InvitationCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvitationResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  accept_invitation_v1_invitations_accept_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InvitationAccept'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  request_email_login_v1_auth_email_login_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EmailLoginRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmailLoginResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  verify_email_login_v1_auth_email_login_verify_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EmailLoginVerify'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AuthTokenResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  create_pat_v1_auth_personal_access_tokens_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PersonalAccessTokenCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PersonalAccessTokenResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   create_review_v1_reviews_post: {
     parameters: {
       query?: never;
@@ -175,12 +707,195 @@ export interface operations {
     };
     responses: {
       /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReviewResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  get_review_v1_reviews__review_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        review_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ReviewResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  upload_context_v1_reviews__review_id__context_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        review_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ContextUploadRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReviewResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  list_rules_v1_review_rules_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleResponse'][];
+        };
+      };
+    };
+  };
+  create_rule_v1_review_rules_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RuleCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  delete_rule_v1_review_rules__rule_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        rule_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  update_rule_v1_review_rules__rule_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        rule_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RuleUpdate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RuleResponse'];
         };
       };
       /** @description Validation Error */

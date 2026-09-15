@@ -3,11 +3,24 @@ name = "review-agent-api"
 version = "0.1.0"
 description = "Diff-only review API"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
+  "alembic>=1.14,<2.0",
+  "email-validator>=2.2,<3.0",
   "fastapi>=0.115,<1.0",
+  "starlette>=0.40,<1.0",
+  "anyio>=4.6,<4.15",
+  "arq>=0.26,<1.0",
+  "openai>=1.0,<3.0",
+  "python-dotenv>=1.0,<2.0",
+  "psycopg[binary]>=3.2,<4.0",
+  "sqlalchemy>=2.0,<3.0",
   "uvicorn[standard]>=0.34,<1.0",
 ]
+
+[project.scripts]
+review-agent-purge-raw-content = "review_agent_api.maintenance:main"
+review-agent-worker = "review_agent_api.worker:main"
 
 [dependency-groups]
 dev = [

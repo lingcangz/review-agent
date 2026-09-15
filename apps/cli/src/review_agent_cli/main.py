@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import cast
@@ -16,7 +17,9 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--diff-file", type=Path, required=True, help="Git diff 文件")
     review.add_argument("--context", type=Path, action="append", default=[], help="按需上传的文件")
     review.add_argument("--api-url", default="http://localhost:8000", help="API 地址")
-    review.add_argument("--organization", default="local", help="组织标识")
+    review.add_argument(
+        "--token", default=os.getenv("REVIEW_AGENT_TOKEN"), help="CLI Personal Access Token"
+    )
     return parser
 
 
@@ -25,6 +28,8 @@ def relative_path(path: Path, root: Path) -> str:
 
 
 def request_review(args: argparse.Namespace, repository_root: Path) -> dict[str, object]:
+    if not args.token:
+        raise ValueError("请通过 --token 或 REVIEW_AGENT_TOKEN 提供 CLI Personal Access Token")
     diff = args.diff_file.read_text(encoding="utf-8")
     patterns = read_ignore_patterns(repository_root)
     paths_to_check = changed_paths(diff)
@@ -42,14 +47,13 @@ def request_review(args: argparse.Namespace, repository_root: Path) -> dict[str,
         raise ValueError(f"拒绝上传受保护的路径：{', '.join(ignored)}")
 
     payload = {
-        "organization_id": args.organization,
         "diff": redact_secrets(diff),
         "context": context,
     }
     request = Request(
         f"{args.api_url.rstrip('/')}/v1/reviews",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {args.token}"},
         method="POST",
     )
     with urlopen(request, timeout=30) as response:

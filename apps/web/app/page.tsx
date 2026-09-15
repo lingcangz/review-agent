@@ -1,4 +1,5 @@
 import type { components } from '../lib/api.generated';
+import Link from 'next/link';
 
 type ReviewRequest = components['schemas']['ReviewRequest'];
 
@@ -24,6 +25,12 @@ export default function Home() {
         </ul>
         <code>{exampleRequest.diff}</code>
       </section>
+      <p>
+        <Link href="/auth/login">使用邮箱登录</Link>
+      </p>
+      <p>
+        <Link href="/onboarding">创建组织</Link>
+      </p>
     </main>
   );
 }

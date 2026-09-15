@@ -48,6 +48,7 @@ Do not report style preferences, speculative refactors, or low-confidence concer
 - Keep API request/response models typed and document public endpoints in OpenAPI.
 - Generate TypeScript API types from OpenAPI; do not duplicate backend contracts manually.
 - Keep user-visible product copy and generated review reports in Chinese.
+- 每次更新后，必须在根目录 `UPDATE_LOG.md` 记录主要变更、验证命令和已知限制。
 
 ## Completion standard
 
