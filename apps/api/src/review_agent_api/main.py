@@ -22,6 +22,9 @@ def create_review(request: ReviewRequest) -> ReviewResponse:
     return ReviewResponse(
         review_id=str(uuid4()),
         status="completed",
-        report="已接收变更 diff。当前 v1 骨架不会上传完整仓库，也不会阻断合并；尚未发现可确认的问题。",
+        report=(
+            "已接收变更 diff。当前 v1 骨架不会上传完整仓库，也不会阻断合并；"
+            "尚未发现可确认的问题。"
+        ),
         findings=[],
     )
