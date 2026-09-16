@@ -1,15 +1,14 @@
 """Organization-isolated HTTP API. Request bodies are intentionally never logged."""
 
+from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
 from os import getenv
 from typing import Annotated, Any, Literal, cast
 
-from collections.abc import Generator
-
-from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, status
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -27,8 +26,10 @@ from review_agent_api.db_models import (
     SessionToken,
     User,
 )
+from review_agent_api.mailer import SmtpMailer
 from review_agent_api.models import (
     AuthTokenResponse,
+    ContextRequest,
     ContextUploadRequest,
     EmailLoginRequest,
     EmailLoginResponse,
@@ -41,13 +42,14 @@ from review_agent_api.models import (
     OrganizationResponse,
     PersonalAccessTokenCreate,
     PersonalAccessTokenResponse,
+    ReviewHistoryItem,
+    ReviewHistoryResponse,
     ReviewRequest,
     ReviewResponse,
     RuleCreate,
     RuleResponse,
     RuleUpdate,
 )
-from review_agent_api.mailer import SmtpMailer
 from review_agent_api.queue import ArqReviewQueue, ReviewQueue
 from review_agent_api.security import new_token, token_hash
 
@@ -89,7 +91,9 @@ def review_response(review: Review, session: Session) -> ReviewResponse:
         ),
         report=review.report,
         findings=[Finding.model_validate(finding, from_attributes=True) for finding in findings],
-        requested_context_paths=review.requested_context_paths,
+        requested_context=[
+            ContextRequest.model_validate(item) for item in review.requested_context
+        ],
     )
 
 
@@ -268,7 +272,7 @@ def create_app(
 
     @app.post("/v1/auth/email-login", response_model=EmailLoginResponse)
     def request_email_login(payload: EmailLoginRequest, session: DbSession) -> EmailLoginResponse:
-        # A production mail sender consumes this record. Keep the response generic to avoid account discovery.
+        # Keep the response generic to avoid account discovery.
         email = str(payload.email).lower()
         user = session.scalar(select(User).where(User.email == email))
         membership = (
@@ -391,6 +395,8 @@ def create_app(
                     organization_id=principal.organization_id,
                     review_id=review.id,
                     path=item.path,
+                    start_line=item.start_line,
+                    end_line=item.end_line,
                     content=item.content,
                     raw_content_expires_at=now() + RAW_CONTENT_RETENTION,
                 )
@@ -418,6 +424,53 @@ def create_app(
             raise HTTPException(status_code=404, detail="审查任务不存在")
         return review_response(review, session)
 
+    @app.get("/v1/reviews", response_model=ReviewHistoryResponse)
+    def list_reviews(
+        principal: CurrentPrincipal,
+        session: DbSession,
+        limit: int = Query(default=20, ge=1, le=100),
+        cursor: str | None = None,
+    ) -> ReviewHistoryResponse:
+        statement = select(Review).where(Review.organization_id == principal.organization_id)
+        if cursor:
+            cursor_review = session.scalar(
+                select(Review).where(
+                    Review.id == cursor, Review.organization_id == principal.organization_id
+                )
+            )
+            if cursor_review is None:
+                raise HTTPException(status_code=400, detail="审查历史游标无效")
+            cursor_created_at = (
+                select(Review.created_at).where(Review.id == cursor_review.id).scalar_subquery()
+            )
+            statement = statement.where(
+                or_(
+                    Review.created_at < cursor_created_at,
+                    and_(
+                        Review.created_at == cursor_created_at,
+                        Review.id < cursor_review.id,
+                    ),
+                )
+            )
+        reviews = session.scalars(
+            statement.order_by(Review.created_at.desc(), Review.id.desc()).limit(limit + 1)
+        ).all()
+        page = reviews[:limit]
+        return ReviewHistoryResponse(
+            items=[
+                ReviewHistoryItem(
+                    review_id=review.id,
+                    status=cast(
+                        Literal["queued", "running", "completed", "needs_context", "failed"],
+                        review.status,
+                    ),
+                    created_at=review.created_at,
+                )
+                for review in page
+            ],
+            next_cursor=page[-1].id if len(reviews) > limit and page else None,
+        )
+
     @app.post("/v1/reviews/{review_id}/context", response_model=ReviewResponse)
     async def upload_context(
         review_id: str,
@@ -435,7 +488,10 @@ def create_app(
         for item in payload.context:
             existing = session.scalar(
                 select(ReviewContext).where(
-                    ReviewContext.review_id == review.id, ReviewContext.path == item.path
+                    ReviewContext.review_id == review.id,
+                    ReviewContext.path == item.path,
+                    ReviewContext.start_line == item.start_line,
+                    ReviewContext.end_line == item.end_line,
                 )
             )
             if existing:
@@ -447,6 +503,8 @@ def create_app(
                         organization_id=principal.organization_id,
                         review_id=review.id,
                         path=item.path,
+                        start_line=item.start_line,
+                        end_line=item.end_line,
                         content=item.content,
                         raw_content_expires_at=now() + RAW_CONTENT_RETENTION,
                     )

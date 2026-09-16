@@ -1,5 +1,21 @@
 # 更新记录
 
+## 2026-09-16（上下文范围与远端历史）
+
+- 将审查上下文请求升级为结构化 `path`、`start_line`、`end_line`，单段最多 500 行；CLI 仅读取并回传服务获准的确切范围，且继续执行忽略路径、仓库边界、二进制和密钥脱敏检查。
+- 新增 Alembic 迁移 `20260916_0004`：保存上下文行范围，并允许同一审查中的同一路径保存多个不同范围。
+- 新增组织隔离的 `GET /v1/reviews?limit=&cursor=` 历史摘要接口；CLI `history` 默认使用远端结果并在不可用时回退到本机历史。
+- 重新生成 `apps/api/openapi.json` 与 Web API TypeScript 类型。
+- 验证：`npm run format:check`、`npm run typecheck`、`npm test`（Web 3、API 11、CLI 14）与 `npm run build` 均通过；`git diff --check` 无输出。
+- 已知限制：迁移前处于 `needs_context` 状态的旧任务没有历史行范围，升级后会安全地转换为请求该文件的第 1–500 行；如仍需更多内容，worker 会发起新的受限请求。
+
+## 2026-09-16
+
+- 实现 CLI `init`、`login`、`review` 与 `history`：配置和本地任务历史均在仓库外保存；`review` 从 `--base` 收集 diff、文件清单，默认自动确认 `y`，`--confirm` 可要求人工确认。
+- 增加 Git 路径规范化、`.review-agentignore` 校验、二进制拒绝和密钥脱敏；上下文请求只回传服务明确请求的、受限且脱敏的文本路径，显式 `--context` 支持 `路径@起始行-结束行`。
+- 增加本地变更 Python 文件的 AST、Ruff 与 Bandit 高置信分析，结果只在本机显示，不会发送给 API。
+- 验证：`uv run --directory apps/cli ruff format --check .`、`uv run --directory apps/cli ruff check .`、`uv run --directory apps/cli mypy src`、`uv run --directory apps/cli pytest` 均通过（13 个测试）；`git diff --check` 无输出。
+
 - 2026-09-15：将 API 与 CLI 的解释器约束收紧为 Python 3.12（`>=3.12,<3.13`），并将 Starlette 约束在 v1 以前、AnyIO 限制为 `<4.15`；未受约束的 Starlette 1.6 会要求 `httpx2`，而 AnyIO 4.15 的 blocking portal 在当前环境无法返回，二者会使最小 ASGI 请求测试挂起。重建受支持环境后将复跑完整检查。
 - 2026-09-15：在 Python 3.12.14 的本机执行环境中完成验证：`npm run format:check`、`npm run typecheck`、`npm test`（Web 3、API 9、CLI 3）与 `npm run build` 均通过；`git diff --check` 无输出。受限沙箱会阻止事件循环的本地跨线程通信，因此 HTTP 测试须在本机执行环境中运行。
 

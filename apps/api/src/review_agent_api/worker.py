@@ -20,7 +20,7 @@ REVIEW_INSTRUCTIONS = """你是团队 Python Git 变更审阅器。仅报告可�
 1. 正确性缺陷；2. 安全漏洞；3. 此次变更直接造成的回归。
 不要报告风格、重构建议、猜测或低置信度问题。每条 finding 必须定位到改动后的精确路径和行范围，
 并给出提交中的具体证据。P0 仅限可被利用的关键风险；P1 是很可能的缺陷或安全问题；
-P2 是已确认的低影响问题。证据不足时返回 needs_context，并只请求最小的相对路径上下文。
+P2 是已确认的低影响问题。证据不足时返回 needs_context，并只请求最小的相对路径和行范围上下文。
 所有报告、标题、证据和建议必须使用中文。"""
 
 
@@ -70,7 +70,9 @@ async def run_model(
     if not api_key:
         raise RuntimeError("未配置 OpenAI 凭据")
     context_text = "\n\n".join(
-        f"--- 路径：{item.path}\n{redact_secrets(item.content)}" for item in contexts
+        f"--- 路径：{item.path}（原文件第 {item.start_line}-{item.end_line} 行）\n"
+        f"{redact_secrets(item.content)}"
+        for item in contexts
     )
     rule_text = (
         "\n".join(f"- {rule.name}：{rule.instruction}" for rule in rules if rule.enabled)
@@ -151,8 +153,10 @@ async def run_review(_ctx: dict[str, Any], review_id: str) -> None:
             )
         review.status = result.status
         review.report = result.report
-        review.requested_context_paths = (
-            result.requested_context_paths if result.status == "needs_context" else []
+        review.requested_context = (
+            [item.model_dump() for item in result.requested_context]
+            if result.status == "needs_context"
+            else []
         )
         session.commit()
 

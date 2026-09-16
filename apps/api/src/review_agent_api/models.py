@@ -15,13 +15,46 @@ def validate_relative_path(value: str) -> str:
 
 
 class RequestedContext(BaseModel):
+    """A bounded, path-scoped source range supplied by the client."""
+
     path: str = Field(description="仓库相对路径")
+    start_line: int = Field(ge=1, description="上下文在原文件中的起始行")
+    end_line: int = Field(ge=1, description="上下文在原文件中的结束行")
     content: str = Field(min_length=1, max_length=100_000, description="已脱敏的文件内容")
 
     @field_validator("path")
     @classmethod
     def path_is_relative(cls, value: str) -> str:
         return validate_relative_path(value)
+
+    @model_validator(mode="after")
+    def valid_range(self) -> "RequestedContext":
+        if self.end_line < self.start_line:
+            raise ValueError("结束行不能小于开始行")
+        if self.end_line - self.start_line >= 500:
+            raise ValueError("单个上下文范围最多 500 行")
+        return self
+
+
+class ContextRequest(BaseModel):
+    """The smallest source range the worker is allowed to request next."""
+
+    path: str = Field(description="仓库相对路径")
+    start_line: int = Field(ge=1, description="请求的起始行")
+    end_line: int = Field(ge=1, description="请求的结束行")
+
+    @field_validator("path")
+    @classmethod
+    def path_is_relative(cls, value: str) -> str:
+        return validate_relative_path(value)
+
+    @model_validator(mode="after")
+    def valid_range(self) -> "ContextRequest":
+        if self.end_line < self.start_line:
+            raise ValueError("结束行不能小于开始行")
+        if self.end_line - self.start_line >= 500:
+            raise ValueError("单个上下文范围最多 500 行")
+        return self
 
 
 class ReviewRequest(BaseModel):
@@ -61,7 +94,18 @@ class ReviewResponse(BaseModel):
     status: Literal["queued", "running", "completed", "needs_context", "failed"]
     report: str | None = None
     findings: list[Finding] = Field(default_factory=list)
-    requested_context_paths: list[str] = Field(default_factory=list)
+    requested_context: list[ContextRequest] = Field(default_factory=list)
+
+
+class ReviewHistoryItem(BaseModel):
+    review_id: str
+    status: Literal["queued", "running", "completed", "needs_context", "failed"]
+    created_at: datetime
+
+
+class ReviewHistoryResponse(BaseModel):
+    items: list[ReviewHistoryItem]
+    next_cursor: str | None = None
 
 
 class ReviewModelResult(BaseModel):
@@ -70,12 +114,15 @@ class ReviewModelResult(BaseModel):
     status: Literal["completed", "needs_context"]
     report: str = Field(min_length=1, max_length=10_000)
     findings: list[Finding] = Field(max_length=50)
-    requested_context_paths: list[str] = Field(max_length=20)
+    requested_context: list[ContextRequest] = Field(max_length=20)
 
-    @field_validator("requested_context_paths")
-    @classmethod
-    def paths_are_relative(cls, values: list[str]) -> list[str]:
-        return [validate_relative_path(value) for value in values]
+    @model_validator(mode="after")
+    def context_matches_status(self) -> "ReviewModelResult":
+        if self.status == "completed" and self.requested_context:
+            raise ValueError("完成的审查不能请求上下文")
+        if self.status == "needs_context" and not self.requested_context:
+            raise ValueError("请求上下文时必须提供至少一个受限范围")
+        return self
 
 
 class OrganizationCreate(BaseModel):

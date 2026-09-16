@@ -10,7 +10,7 @@ from sqlalchemy import inspect
 
 from review_agent_api.db_models import Base
 from review_agent_api.main import create_app
-from review_agent_api.models import Finding, ReviewModelResult
+from review_agent_api.models import ContextRequest, Finding, ReviewModelResult
 from review_agent_api.worker import changed_lines, run_model, run_review, verified_findings
 
 
@@ -82,7 +82,10 @@ def test_review_requires_authentication_and_valid_context(tmp_path: Path) -> Non
     invalid_path = client.post(
         "/v1/reviews",
         headers=auth(token),
-        json={"diff": "diff --git a/a.py b/a.py", "context": [{"path": "../.env", "content": "x"}]},
+        json={
+            "diff": "diff --git a/a.py b/a.py",
+            "context": [{"path": "../.env", "start_line": 1, "end_line": 1, "content": "x"}],
+        },
     )
     assert invalid_path.status_code == 422
 
@@ -156,9 +159,90 @@ def test_pat_and_context_are_scoped_to_its_organization(tmp_path: Path) -> None:
     context = client.post(
         f"/v1/reviews/{review.json()['review_id']}/context",
         headers=auth(pat.json()["token"]),
-        json={"context": [{"path": "a.py", "content": "print('safe')"}]},
+        json={
+            "context": [
+                {"path": "a.py", "start_line": 1, "end_line": 1, "content": "print('safe')"}
+            ]
+        },
     )
     assert context.status_code == 200
+
+
+def test_history_is_organization_scoped_and_context_ranges_are_preserved(tmp_path: Path) -> None:
+    client = make_client(tmp_path)
+    first = create_organization(client, "history-first", "history-first@example.com")
+    second = create_organization(client, "history-second", "history-second@example.com")
+    first_token = login(client, "history-first@example.com", first["id"])
+    second_token = login(client, "history-second@example.com", second["id"])
+    first_review = client.post(
+        "/v1/reviews", headers=auth(first_token), json={"diff": "diff --git a/a.py b/a.py"}
+    )
+    assert first_review.status_code == 202
+    second_first_review = client.post(
+        "/v1/reviews", headers=auth(first_token), json={"diff": "diff --git a/c.py b/c.py"}
+    )
+    assert second_first_review.status_code == 202
+    second_review = client.post(
+        "/v1/reviews", headers=auth(second_token), json={"diff": "diff --git a/b.py b/b.py"}
+    )
+    assert second_review.status_code == 202
+
+    context = client.post(
+        f"/v1/reviews/{first_review.json()['review_id']}/context",
+        headers=auth(first_token),
+        json={
+            "context": [
+                {"path": "a.py", "start_line": 1, "end_line": 2, "content": "one\ntwo\n"},
+                {"path": "a.py", "start_line": 10, "end_line": 11, "content": "ten\neleven\n"},
+            ]
+        },
+    )
+    assert context.status_code == 200
+    history = client.get("/v1/reviews?limit=1", headers=auth(first_token))
+    assert history.status_code == 200
+    assert len(history.json()["items"]) == 1
+    cursor = history.json()["next_cursor"]
+    assert cursor is not None
+    next_page = client.get(f"/v1/reviews?limit=1&cursor={cursor}", headers=auth(first_token))
+    assert next_page.status_code == 200
+    assert {
+        history.json()["items"][0]["review_id"],
+        next_page.json()["items"][0]["review_id"],
+    } == {first_review.json()["review_id"], second_first_review.json()["review_id"]}
+    assert (
+        client.get(
+            f"/v1/reviews?cursor={second_review.json()['review_id']}", headers=auth(first_token)
+        ).status_code
+        == 400
+    )
+
+
+def test_worker_persists_bounded_context_request(tmp_path: Path, monkeypatch) -> None:
+    client = make_client(tmp_path)
+    organization = create_organization(client, "context-range", "context-range@example.com")
+    token = login(client, "context-range@example.com", organization["id"])
+    submitted = client.post(
+        "/v1/reviews", headers=auth(token), json={"diff": "diff --git a/a.py b/a.py"}
+    )
+
+    async def fake_model(*_args) -> ReviewModelResult:
+        return ReviewModelResult(
+            status="needs_context",
+            report="需要查看有限范围。",
+            findings=[],
+            requested_context=[ContextRequest(path="a.py", start_line=10, end_line=20)],
+        )
+
+    monkeypatch.setattr("review_agent_api.worker.run_model", fake_model)
+    asyncio.run(
+        run_review(
+            {"database_url": client.app.state.test_database_url}, submitted.json()["review_id"]
+        )
+    )
+    result = client.get(f"/v1/reviews/{submitted.json()['review_id']}", headers=auth(token))
+    assert result.json()["requested_context"] == [
+        {"path": "a.py", "start_line": 10, "end_line": 20}
+    ]
 
 
 def test_admin_invitation_creates_a_member_who_can_start_a_session(tmp_path: Path) -> None:
@@ -242,7 +326,7 @@ def test_worker_persists_validated_structured_result(tmp_path: Path, monkeypatch
                     recommendation="恢复预期返回值。",
                 )
             ],
-            requested_context_paths=[],
+            requested_context=[],
         )
 
     monkeypatch.setattr("review_agent_api.worker.run_model", fake_model)
@@ -270,7 +354,7 @@ def test_worker_uses_configured_openai_base_url(monkeypatch) -> None:
                             "status": "completed",
                             "report": "未发现可确认问题。",
                             "findings": [],
-                            "requested_context_paths": [],
+                            "requested_context": [],
                         }
                     )
                 },

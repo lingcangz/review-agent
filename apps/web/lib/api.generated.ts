@@ -130,7 +130,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** List Reviews */
+    get: operations['list_reviews_v1_reviews_get'];
     put?: never;
     /** Create Review */
     post: operations['create_review_v1_reviews_post'];
@@ -229,6 +230,27 @@ export interface components {
        * Format: date-time
        */
       expires_at: string;
+    };
+    /**
+     * ContextRequest
+     * @description The smallest source range the worker is allowed to request next.
+     */
+    ContextRequest: {
+      /**
+       * Path
+       * @description 仓库相对路径
+       */
+      path: string;
+      /**
+       * Start Line
+       * @description 请求的起始行
+       */
+      start_line: number;
+      /**
+       * End Line
+       * @description 请求的结束行
+       */
+      end_line: number;
     };
     /** ContextUploadRequest */
     ContextUploadRequest: {
@@ -367,7 +389,10 @@ export interface components {
       /** Expires At */
       expires_at: string | null;
     };
-    /** RequestedContext */
+    /**
+     * RequestedContext
+     * @description A bounded, path-scoped source range supplied by the client.
+     */
     RequestedContext: {
       /**
        * Path
@@ -375,10 +400,42 @@ export interface components {
        */
       path: string;
       /**
+       * Start Line
+       * @description 上下文在原文件中的起始行
+       */
+      start_line: number;
+      /**
+       * End Line
+       * @description 上下文在原文件中的结束行
+       */
+      end_line: number;
+      /**
        * Content
        * @description 已脱敏的文件内容
        */
       content: string;
+    };
+    /** ReviewHistoryItem */
+    ReviewHistoryItem: {
+      /** Review Id */
+      review_id: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'queued' | 'running' | 'completed' | 'needs_context' | 'failed';
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
+    /** ReviewHistoryResponse */
+    ReviewHistoryResponse: {
+      /** Items */
+      items: components['schemas']['ReviewHistoryItem'][];
+      /** Next Cursor */
+      next_cursor?: string | null;
     };
     /**
      * ReviewRequest
@@ -403,8 +460,8 @@ export interface components {
       report?: string | null;
       /** Findings */
       findings?: components['schemas']['Finding'][];
-      /** Requested Context Paths */
-      requested_context_paths?: string[];
+      /** Requested Context */
+      requested_context?: components['schemas']['ContextRequest'][];
     };
     /** RuleCreate */
     RuleCreate: {
@@ -535,7 +592,9 @@ export interface operations {
       query?: never;
       header?: never;
       path?: never;
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody: {
       content: {
@@ -665,7 +724,9 @@ export interface operations {
       query?: never;
       header?: never;
       path?: never;
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody: {
       content: {
@@ -693,12 +754,48 @@ export interface operations {
       };
     };
   };
+  list_reviews_v1_reviews_get: {
+    parameters: {
+      query?: {
+        limit?: number;
+        cursor?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReviewHistoryResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   create_review_v1_reviews_post: {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody: {
       content: {
@@ -733,7 +830,9 @@ export interface operations {
       path: {
         review_id: string;
       };
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody?: never;
     responses: {
@@ -764,7 +863,9 @@ export interface operations {
       path: {
         review_id: string;
       };
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody: {
       content: {
@@ -797,7 +898,9 @@ export interface operations {
       query?: never;
       header?: never;
       path?: never;
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody?: never;
     responses: {
@@ -810,6 +913,15 @@ export interface operations {
           'application/json': components['schemas']['RuleResponse'][];
         };
       };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
     };
   };
   create_rule_v1_review_rules_post: {
@@ -817,7 +929,9 @@ export interface operations {
       query?: never;
       header?: never;
       path?: never;
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody: {
       content: {
@@ -852,7 +966,9 @@ export interface operations {
       path: {
         rule_id: string;
       };
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody?: never;
     responses: {
@@ -881,7 +997,9 @@ export interface operations {
       path: {
         rule_id: string;
       };
-      cookie?: never;
+      cookie?: {
+        review_agent_session?: string | null;
+      };
     };
     requestBody: {
       content: {

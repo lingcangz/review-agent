@@ -70,15 +70,38 @@
       "post": {
         "summary": "Create Invitation",
         "operationId": "create_invitation_v1_invitations_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/InvitationCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -101,12 +124,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/v1/invitations/accept": {
@@ -220,15 +238,38 @@
       "post": {
         "summary": "Create Pat",
         "operationId": "create_pat_v1_auth_personal_access_tokens_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PersonalAccessTokenCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -251,27 +292,45 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/v1/reviews": {
       "post": {
         "summary": "Create Review",
         "operationId": "create_review_v1_reviews_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ReviewRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -294,12 +353,84 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "summary": "List Reviews",
+        "operationId": "list_reviews_v1_reviews_get",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/reviews/{review_id}": {
@@ -319,6 +450,22 @@
             "schema": {
               "type": "string",
               "title": "Review Id"
+            }
+          },
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
             }
           }
         ],
@@ -364,6 +511,22 @@
               "type": "string",
               "title": "Review Id"
             }
+          },
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
           }
         ],
         "requestBody": {
@@ -404,40 +567,91 @@
       "get": {
         "summary": "List Rules",
         "operationId": "list_rules_v1_review_rules_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/RuleResponse"
                   },
-                  "type": "array",
                   "title": "Response List Rules V1 Review Rules Get"
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "summary": "Create Rule",
         "operationId": "create_rule_v1_review_rules_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RuleCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -460,12 +674,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/v1/review-rules/{rule_id}": {
@@ -485,6 +694,22 @@
             "schema": {
               "type": "string",
               "title": "Rule Id"
+            }
+          },
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
             }
           }
         ],
@@ -538,6 +763,22 @@
               "type": "string",
               "title": "Rule Id"
             }
+          },
+          {
+            "name": "review_agent_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Agent Session"
+            }
           }
         ],
         "responses": {
@@ -581,6 +822,31 @@
         "type": "object",
         "required": ["access_token", "expires_at"],
         "title": "AuthTokenResponse"
+      },
+      "ContextRequest": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "仓库相对路径"
+          },
+          "start_line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Start Line",
+            "description": "请求的起始行"
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "End Line",
+            "description": "请求的结束行"
+          }
+        },
+        "type": "object",
+        "required": ["path", "start_line", "end_line"],
+        "title": "ContextRequest",
+        "description": "The smallest source range the worker is allowed to request next."
       },
       "ContextUploadRequest": {
         "properties": {
@@ -866,6 +1132,18 @@
             "title": "Path",
             "description": "仓库相对路径"
           },
+          "start_line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Start Line",
+            "description": "上下文在原文件中的起始行"
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "End Line",
+            "description": "上下文在原文件中的结束行"
+          },
           "content": {
             "type": "string",
             "maxLength": 100000,
@@ -875,8 +1153,55 @@
           }
         },
         "type": "object",
-        "required": ["path", "content"],
-        "title": "RequestedContext"
+        "required": ["path", "start_line", "end_line", "content"],
+        "title": "RequestedContext",
+        "description": "A bounded, path-scoped source range supplied by the client."
+      },
+      "ReviewHistoryItem": {
+        "properties": {
+          "review_id": {
+            "type": "string",
+            "title": "Review Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "running", "completed", "needs_context", "failed"],
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["review_id", "status", "created_at"],
+        "title": "ReviewHistoryItem"
+      },
+      "ReviewHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewHistoryItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "ReviewHistoryResponse"
       },
       "ReviewRequest": {
         "properties": {
@@ -929,12 +1254,12 @@
             "type": "array",
             "title": "Findings"
           },
-          "requested_context_paths": {
+          "requested_context": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ContextRequest"
             },
             "type": "array",
-            "title": "Requested Context Paths"
+            "title": "Requested Context"
           }
         },
         "type": "object",

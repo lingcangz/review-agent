@@ -94,7 +94,7 @@ class Review(Base, Timestamped):
     raw_content_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(20), default="queued")
     report: Mapped[str | None] = mapped_column(Text, nullable=True)
-    requested_context_paths: Mapped[list[str]] = mapped_column(JSON, default=list)
+    requested_context: Mapped[list[dict[str, int | str]]] = mapped_column(JSON, default=list)
 
 
 class ReviewFinding(Base, Timestamped):
@@ -113,11 +113,17 @@ class ReviewFinding(Base, Timestamped):
 
 class ReviewContext(Base, Timestamped):
     __tablename__ = "review_contexts"
-    __table_args__ = (UniqueConstraint("review_id", "path"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "review_id", "path", "start_line", "end_line", name="uq_review_context_range"
+        ),
+    )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
     review_id: Mapped[str] = mapped_column(ForeignKey("reviews.id"), index=True)
     path: Mapped[str] = mapped_column(String(500))
+    start_line: Mapped[int] = mapped_column(Integer)
+    end_line: Mapped[int] = mapped_column(Integer)
     content: Mapped[str] = mapped_column(Text)
     raw_content_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 

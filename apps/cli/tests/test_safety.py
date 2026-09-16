@@ -17,3 +17,9 @@ def test_changed_paths_reads_added_diff_files() -> None:
     diff = "--- a/src/a.py\n+++ b/src/a.py\n+print('changed')"
 
     assert changed_paths(diff) == ["src/a.py"]
+
+
+def test_changed_paths_includes_deleted_file() -> None:
+    diff = "--- a/src/removed.py\n+++ /dev/null\n-old"
+
+    assert changed_paths(diff) == ["src/removed.py"]
