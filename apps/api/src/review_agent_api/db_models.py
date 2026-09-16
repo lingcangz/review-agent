@@ -95,6 +95,7 @@ class Review(Base, Timestamped):
     status: Mapped[str] = mapped_column(String(20), default="queued")
     report: Mapped[str | None] = mapped_column(Text, nullable=True)
     requested_context: Mapped[list[dict[str, int | str]]] = mapped_column(JSON, default=list)
+    static_analysis: Mapped[list[dict[str, int | str]]] = mapped_column(JSON, default=list)
 
 
 class ReviewFinding(Base, Timestamped):
@@ -103,6 +104,8 @@ class ReviewFinding(Base, Timestamped):
     organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
     review_id: Mapped[str] = mapped_column(ForeignKey("reviews.id"), index=True)
     severity: Mapped[str] = mapped_column(String(2))
+    confidence: Mapped[str] = mapped_column(String(16))
+    category: Mapped[str] = mapped_column(String(16))
     path: Mapped[str] = mapped_column(String(500))
     start_line: Mapped[int] = mapped_column(Integer)
     end_line: Mapped[int] = mapped_column(Integer)

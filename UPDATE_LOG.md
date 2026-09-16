@@ -1,5 +1,13 @@
 # 更新记录
 
+## 2026-09-16（arq 审查编排）
+
+- Worker 现通过 OpenAI Responses API 发送变更、组织团队规则、无源代码的本地静态分析摘要和严格 JSON Schema；额外代码不会进入初始提示词，只能响应模型的 `request_context` 工具调用，并受路径、行范围、20 次调用和 100 KB 总量限制。
+- API/数据模型新增静态分析摘要，finding 新增强制的 `confidence=high` 与问题类别；新增 Alembic `20260916_0005` 保存这些字段。服务端会拒绝非变更行、非高置信度、无可逐字核验输入证据的 finding，并合并同一范围/类别/标题的重复结果。
+- 模型超时、无效结构化输出、上下文超限均以安全中文失败状态结束，不记录 diff、上下文或提示词。新增 mock 测试覆盖工具上下文、输入内容、异常分型、字段验证与重复 finding 合并；重新生成 OpenAPI 和 Web TypeScript 类型。
+- 验证：`uv run --directory apps/api pytest`（16 通过）、`ruff check .`、`mypy src`；`uv run --directory apps/cli ruff check .`、`mypy src`、`pytest`（14 通过）；`npm run generate:api`、`npm run format:check`、`npm run typecheck`、`npm test`、`npm run build` 与 `git diff --check`。
+- 已知限制：需要用户回传的上下文会先被工具标记为未提供，模型随后以 `needs_context` 返回；静态分析器消息被视为证据线索而不是源代码，当前仅接受 CLI 提交的仓库内相对路径。
+
 ## 2026-09-16（上下文范围与远端历史）
 
 - 将审查上下文请求升级为结构化 `path`、`start_line`、`end_line`，单段最多 500 行；CLI 仅读取并回传服务获准的确切范围，且继续执行忽略路径、仓库边界、二进制和密钥脱敏检查。

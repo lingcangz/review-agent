@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 def validate_relative_path(value: str) -> str:
@@ -62,20 +62,41 @@ class ReviewRequest(BaseModel):
 
     diff: str = Field(min_length=1, max_length=500_000)
     context: list[RequestedContext] = Field(default_factory=list, max_length=20)
+    static_analysis: list["StaticAnalysisFinding"] = Field(default_factory=list, max_length=100)
 
 
 class ContextUploadRequest(BaseModel):
     context: list[RequestedContext] = Field(min_length=1, max_length=20)
 
 
+class StaticAnalysisFinding(BaseModel):
+    """High-confidence local analyzer output; it contains no source content."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tool: str = Field(min_length=1, max_length=40)
+    path: str = Field(description="仓库相对路径")
+    line: int = Field(ge=1)
+    message: str = Field(min_length=1, max_length=2_000)
+
+    @field_validator("path")
+    @classmethod
+    def path_is_relative(cls, value: str) -> str:
+        return validate_relative_path(value)
+
+
 class Finding(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     severity: Literal["P0", "P1", "P2"]
+    confidence: Literal["high"]
+    category: Literal["correctness", "security", "regression"]
     path: str
     start_line: int = Field(ge=1)
     end_line: int = Field(ge=1)
-    title: str
-    evidence: str
-    recommendation: str
+    title: str = Field(min_length=1, max_length=240)
+    evidence: str = Field(min_length=3, max_length=5_000)
+    recommendation: str = Field(min_length=1, max_length=5_000)
 
     @field_validator("path")
     @classmethod
@@ -122,6 +143,8 @@ class ReviewModelResult(BaseModel):
             raise ValueError("完成的审查不能请求上下文")
         if self.status == "needs_context" and not self.requested_context:
             raise ValueError("请求上下文时必须提供至少一个受限范围")
+        if self.status == "needs_context" and self.findings:
+            raise ValueError("请求上下文时不能输出未经证实的发现")
         return self
 
 

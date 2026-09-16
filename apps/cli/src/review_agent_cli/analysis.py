@@ -1,4 +1,4 @@
-"""High-confidence local Python checks. Tool output never leaves this machine."""
+"""High-confidence local Python checks; only path, line and message summaries may be submitted."""
 
 import ast
 import json

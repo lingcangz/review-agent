@@ -384,6 +384,7 @@ def create_app(
             organization_id=principal.organization_id,
             created_by_user_id=principal.user_id,
             diff=payload.diff,
+            static_analysis=[item.model_dump() for item in payload.static_analysis],
             raw_content_expires_at=now() + RAW_CONTENT_RETENTION,
             status="queued",
         )

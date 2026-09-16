@@ -291,6 +291,16 @@ export interface components {
        * @enum {string}
        */
       severity: 'P0' | 'P1' | 'P2';
+      /**
+       * Confidence
+       * @constant
+       */
+      confidence: 'high';
+      /**
+       * Category
+       * @enum {string}
+       */
+      category: 'correctness' | 'security' | 'regression';
       /** Path */
       path: string;
       /** Start Line */
@@ -446,6 +456,8 @@ export interface components {
       diff: string;
       /** Context */
       context?: components['schemas']['RequestedContext'][];
+      /** Static Analysis */
+      static_analysis?: components['schemas']['StaticAnalysisFinding'][];
     };
     /** ReviewResponse */
     ReviewResponse: {
@@ -509,6 +521,23 @@ export interface components {
       enabled?: boolean | null;
       /** Priority */
       priority?: number | null;
+    };
+    /**
+     * StaticAnalysisFinding
+     * @description High-confidence local analyzer output; it contains no source content.
+     */
+    StaticAnalysisFinding: {
+      /** Tool */
+      tool: string;
+      /**
+       * Path
+       * @description 仓库相对路径
+       */
+      path: string;
+      /** Line */
+      line: number;
+      /** Message */
+      message: string;
     };
     /** ValidationError */
     ValidationError: {

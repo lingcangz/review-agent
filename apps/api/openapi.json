@@ -924,6 +924,16 @@
             "enum": ["P0", "P1", "P2"],
             "title": "Severity"
           },
+          "confidence": {
+            "type": "string",
+            "const": "high",
+            "title": "Confidence"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["correctness", "security", "regression"],
+            "title": "Category"
+          },
           "path": {
             "type": "string",
             "title": "Path"
@@ -940,20 +950,29 @@
           },
           "title": {
             "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
             "title": "Title"
           },
           "evidence": {
             "type": "string",
+            "maxLength": 5000,
+            "minLength": 3,
             "title": "Evidence"
           },
           "recommendation": {
             "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
             "title": "Recommendation"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "severity",
+          "confidence",
+          "category",
           "path",
           "start_line",
           "end_line",
@@ -1218,6 +1237,14 @@
             "type": "array",
             "maxItems": 20,
             "title": "Context"
+          },
+          "static_analysis": {
+            "items": {
+              "$ref": "#/components/schemas/StaticAnalysisFinding"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Static Analysis"
           }
         },
         "type": "object",
@@ -1387,6 +1414,37 @@
         },
         "type": "object",
         "title": "RuleUpdate"
+      },
+      "StaticAnalysisFinding": {
+        "properties": {
+          "tool": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Tool"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "仓库相对路径"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Line"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["tool", "path", "line", "message"],
+        "title": "StaticAnalysisFinding",
+        "description": "High-confidence local analyzer output; it contains no source content."
       },
       "ValidationError": {
         "properties": {

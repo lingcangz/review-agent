@@ -84,7 +84,10 @@ def _validate_input(review_input: ReviewInput) -> tuple[str, int]:
 
 
 def _confirm(review_input: ReviewInput, redacted_count: int, automatic: bool) -> None:
-    print(f"将仅上传 {len(review_input.files)} 个文件的 Git diff；不会上传完整仓库或本地分析结果。")
+    print(
+        f"将仅上传 {len(review_input.files)} 个文件的 Git diff 和无源代码的静态分析摘要；"
+        "不会上传完整仓库。"
+    )
     print("文件：" + ", ".join(item.path for item in review_input.files))
     if redacted_count:
         print("检测到密钥模式，相关值已在上传前脱敏。")
@@ -205,6 +208,32 @@ def _print_findings(findings: list[LocalFinding]) -> None:
         print(f"- {finding.tool} {finding.path}:{finding.line}：{finding.message}")
 
 
+def _static_analysis_payload(
+    root: Path, findings: list[LocalFinding]
+) -> list[dict[str, str | int]]:
+    """Convert local analyzer locations to safe repository-relative API metadata."""
+    payload: list[dict[str, str | int]] = []
+    for finding in findings:
+        source = Path(finding.path)
+        try:
+            relative = (
+                source.resolve().relative_to(root.resolve()).as_posix()
+                if source.is_absolute()
+                else normalize_repository_path(finding.path)
+            )
+        except ValueError:
+            continue
+        payload.append(
+            {
+                "tool": finding.tool,
+                "path": relative,
+                "line": finding.line,
+                "message": finding.message,
+            }
+        )
+    return payload
+
+
 def run_init(args: argparse.Namespace) -> None:
     config = load_config()
     config.api_url = args.api_url.rstrip("/")
@@ -252,7 +281,15 @@ def run_review(args: argparse.Namespace) -> None:
     token = _require_token(args, config)
     client = ApiClient((args.api_url or config.api_url).rstrip("/"), token)
     created = client.request(
-        "POST", "/v1/reviews", {"diff": redacted_diff, "context": initial_context}
+        "POST",
+        "/v1/reviews",
+        {
+            "diff": redacted_diff,
+            "context": initial_context,
+            "static_analysis": _static_analysis_payload(
+                review_input.repository_root, local_findings
+            ),
+        },
     )
     review_id = created.get("review_id")
     if not isinstance(review_id, str):

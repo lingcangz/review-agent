@@ -272,7 +272,8 @@ def test_initial_alembic_migration_creates_persistent_models(tmp_path: Path, mon
 
     from sqlalchemy import create_engine
 
-    tables = set(inspect(create_engine(f"sqlite:///{database_file}")).get_table_names())
+    inspector = inspect(create_engine(f"sqlite:///{database_file}"))
+    tables = set(inspector.get_table_names())
     assert {
         "organizations",
         "memberships",
@@ -282,17 +283,23 @@ def test_initial_alembic_migration_creates_persistent_models(tmp_path: Path, mon
         "review_rules",
         "review_findings",
     } <= tables
+    assert {"static_analysis"} <= {column["name"] for column in inspector.get_columns("reviews")}
+    assert {"confidence", "category"} <= {
+        column["name"] for column in inspector.get_columns("review_findings")
+    }
 
 
 def test_worker_only_accepts_findings_anchored_to_changed_lines() -> None:
     diff = "@@ -1,1 +5,2 @@\n-old\n+new\n+next\n"
     finding = Finding(
         severity="P1",
+        confidence="high",
+        category="correctness",
         path="src/service.py",
         start_line=5,
         end_line=6,
         title="错误处理丢失",
-        evidence="新增行直接返回。",
+        evidence="new 新增后直接返回。",
         recommendation="补充异常处理。",
     )
     unanchored = finding.model_copy(update={"start_line": 4, "end_line": 5})
@@ -318,11 +325,13 @@ def test_worker_persists_validated_structured_result(tmp_path: Path, monkeypatch
             findings=[
                 Finding(
                     severity="P1",
+                    confidence="high",
+                    category="correctness",
                     path="src/service.py",
                     start_line=5,
                     end_line=5,
                     title="返回值错误",
-                    evidence="第 5 行改为 new。",
+                    evidence="新增的 new 直接作为返回值。",
                     recommendation="恢复预期返回值。",
                 )
             ],
